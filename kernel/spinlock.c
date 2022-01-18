@@ -8,7 +8,7 @@
 #include "proc.h"
 #include "defs.h"
 
-// 新建一个名为 name 的空锁
+// 初始化锁lk，并命名为name
 void
 initlock(struct spinlock *lk, char *name)
 {
@@ -30,8 +30,10 @@ acquire(struct spinlock *lk)
   //   a5 = 1
   //   s1 = &lk->locked
   //   amoswap.w.aq a5, a5, (s1)
-  // 以下语句作用：每次执行将a5寄存器设为1，同时交换lk->lock
-  // 返回值为lk->lock的值。因此对每个对象（进程，cpu等等）都可以保证不会竞争（当且仅当锁为0时该对象空闲）
+  // __sync_lock_test_and_set(obj,val)原型：
+  // 每次执行将a5寄存器设为val，同时与obj交换，返回值为obj原先的值。
+  // 以下语句作用：每次执行将a5寄存器设为1，同时与lk->locked交换，返回值为lk->locked原先的值。
+  // 因此对每个对象（进程，cpu等等）都可以保证不会竞争（当且仅当锁为0时该对象空闲）
   while(__sync_lock_test_and_set(&lk->locked, 1) != 0)
     ;
 

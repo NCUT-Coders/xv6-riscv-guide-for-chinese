@@ -67,8 +67,9 @@ kvmmake(void)
   return kpgtbl;
 }
 
+
 // 为内核页表进行初始化
-// 这个调用发生在RISC-V启用分页之前，所以地址直接指向物理内存。
+// 这个调用发生在RISC-V启用分页之前，所以地址直接指向物理内存
 void
 kvminit(void)
 {

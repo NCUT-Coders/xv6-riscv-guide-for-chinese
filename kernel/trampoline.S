@@ -32,7 +32,7 @@ uservec:
 	# swap a0 and sscratch
         # so that a0 is TRAPFRAME
         # 将用户代码的a0保存至sscratch中，将a0空闲出来
-        # 同时：调用uservec前，系统将把用户进程的trapframe位置存到sscratch中
+        # 而且：调用uservec前，系统将把用户进程的trapframe位置存到sscratch中
         # 因此：在这一步之后，user的原a0得以保存，且a0指向用户的trapframe
         csrrw a0, sscratch, a0
 
@@ -110,6 +110,7 @@ userret:
 
         # put the saved user a0 in sscratch, so we
         # can swap it with our a0 (TRAPFRAME) in the last step.
+        # 这一步就是上述的uservec将sscratch设为p->trapframe的地址
         ld t0, 112(a0)
         csrw sscratch, t0
 

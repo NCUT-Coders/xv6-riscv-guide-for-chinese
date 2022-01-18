@@ -373,7 +373,7 @@ sfence_vma()
 #define PXMASK          0x1FF // 9 bits（低9位为1的掩码）
 // 页表PPN分级对应的偏移（9位1级）
 #define PXSHIFT(level)  (PGSHIFT+(9*(level)))
-// 虚拟地址 va 在第 level 级指向的PPN下标
+// 虚拟地址 va 在第 level 级的PPN
 #define PX(level, va) ((((uint64) (va)) >> PXSHIFT(level)) & PXMASK)
 
 // one beyond the highest possible virtual address.

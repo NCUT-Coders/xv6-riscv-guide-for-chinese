@@ -24,16 +24,14 @@ static void freeproc(struct proc *p);
 
 extern char trampoline[]; // trampoline.S
 
-// helps ensure that wakeups of wait()ing
-// parents are not lost. helps obey the
-// memory model when using p->parent.
-// must be acquired before any p->lock.
+// 帮助确保等待中的父进程的唤醒不会丢失。
+// 避免访问父进程时的内存异常
+// 必须在任何p->lock之前获得。
 struct spinlock wait_lock;
 
 // 为每个进程的内核堆栈分配一个页面
 // 将其映射到内存中的高位
 // 之后跟随一个无效的防护页。
-//
 void
 proc_mapstacks(pagetable_t kpgtbl) {
   struct proc *p;
@@ -63,10 +61,8 @@ procinit(void)
   }
 }
 
-// Must be called with interrupts disabled,
-// to prevent race with process being moved
-// to a different CPU.
-// 返回当前cpu的编号（必须于无中断时调用）
+// 返回当前cpu的编号
+// 必须于无中断时调用，避免进程移交给不同的CPU
 int
 cpuid()
 {
@@ -74,9 +70,8 @@ cpuid()
   return id;
 }
 
-// Return this CPU's cpu struct.
-// Interrupts must be disabled.
 // 返回当前cpu的状态指针
+// 必须于无中断时调用，避免进程移交给不同的CPU
 struct cpu*
 mycpu(void) {
   int id = cpuid();
@@ -84,9 +79,8 @@ mycpu(void) {
   return c;
 }
 
-// Return the current struct proc *, or zero if none.
 // 返回当前cpu上正在运行的进程信息
-// 应该就是返回调用者自己的进程信息？（因为调用运行说明在cpu上的应该就是自身）
+// 为0则cpu空闲
 struct proc*
 myproc(void) {
   push_off();
@@ -135,14 +129,14 @@ found:
   p->pid = allocpid();
   p->state = USED;
 
-  // Allocate a trapframe page.
+  // 分配陷阱帧，失败则返回0
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
     freeproc(p);
     release(&p->lock);
     return 0;
   }
 
-  // An empty user page table.
+  // 分配用户页表，失败则返回0
   p->pagetable = proc_pagetable(p);
   if(p->pagetable == 0){
     freeproc(p);

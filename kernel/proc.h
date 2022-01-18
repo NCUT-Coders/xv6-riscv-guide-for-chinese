@@ -18,10 +18,10 @@ struct context {
   uint64 s11;
 };
 
-// Per-CPU state.
+// 各个cpu状态.
 struct cpu {
-  struct proc *proc;          // The process running on this cpu, or null.
-  struct context context;     // swtch() here to enter scheduler().
+  struct proc *proc;          // 正在该cpu上运行的进程，若该指针为空则空闲.
+  struct context context;     // cpu当前的上下文/语境，进程调度由scheduler在此操作.
   int noff;                   // Depth of push_off() nesting.
   int intena;                 // Were interrupts enabled before push_off()?
 };
@@ -84,7 +84,7 @@ struct trapframe {
 enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 /*
-Per-process state（处理进程状态）
+Per-process state（单个进程状态）
 xv6 使用结构体 struct proc 来维护一个进程的众多状态。
 */
 struct proc {
@@ -92,13 +92,13 @@ struct proc {
 
   // p->lock must be held when using these:
   enum procstate state;        // Process state（指示了进程的状态：新建、准备运行、运行、等待 I/O 或退出状态中。）
-  void *chan;                  // If non-zero, sleeping on chan
-  int killed;                  // If non-zero, have been killed
+  void *chan;                  // 不为0表示进程在等待链上休眠
+  int killed;                  // 不为0表示已被杀死
   int xstate;                  // Exit status to be returned to parent's wait
   int pid;                     // Process ID（pid，进程号）
 
   // proc_tree_lock must be held when using this:
-  struct proc *parent;         // Parent process
+  struct proc *parent;         // 父进程指针
 
   // these are private to the process, so p->lock need not be held.
 
@@ -106,6 +106,10 @@ struct proc {
   // 当进程进入内核时（为了系统调用或中断），内核代码在进程的内核栈上执行；
   // 当进程在内核中时，它的用户栈仍然包含保存的数据，但不被主动使用。
   // 进程的线程在用户栈和内核栈中交替执行。内核栈是独立的（并且受到保护，不受用户代码的影响），所以即使一个进程用户栈被破坏了，内核也可以执行。
+  // 另外注意！！！！！以p->pagetable为根页表地址的、进程的用户页表与内核页表完全不同。
+  // 内核页表是以satp寄存器为根页表地址的，两个不同根页表地址最后得出的视角截然不同；
+  // 不仅如此：两个的内容也有很大差别：两者都有trampoline页，但内核视角下往下是各个kstack和守护页，而用户页表下是trapframe。
+  // 注：可参考as.pdf；似乎有了重大发现！（2021.5.7）
 
   uint64 kstack;               // Virtual address of kernel stack（内核栈的虚拟地址）
   uint64 sz;                   // Size of process memory (bytes)
