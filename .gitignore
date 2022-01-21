@@ -10,3 +10,7 @@
 */*.d 
 */*.asm 
 */*.sym
+fs.img
+mkfs/mkfs
+user/_*
+
