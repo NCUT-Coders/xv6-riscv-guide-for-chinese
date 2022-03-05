@@ -15,10 +15,10 @@ main(int argc, char *argv[])
     }
     // TODO: try sys_wait?
 
-    const int SOINT = sizeof(int);
+    #define SOINT sizeof(int)
 
-    int upper = 35;
-    int lower = 2;
+    #define upper 35
+    #define lower 2
     int i;
     for (i=lower; i<=upper; i++)
         write(p_0[1], &i, SOINT);
@@ -58,8 +58,8 @@ loop:
         p_0[0] = p_1[0];
         p_0[1] = p_1[1];
         layer_Num++;
+        goto loop;
     }        
-    goto loop;
 
     // main progress exit after ret_info has been sent.
 finish:

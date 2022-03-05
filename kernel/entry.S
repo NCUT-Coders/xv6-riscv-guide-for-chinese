@@ -6,6 +6,7 @@
         # 0x80000000：作为内核起始地址，此处的物理地址将会映射到虚拟地址的0x0处
         # 之所以将内核放在0x80000000而不是0x0，是因为地址范围0x0-0x80000000包含I/O设备。
 .section .text
+.globl _entry
 _entry:
 	# set up a stack for C.
         # stack0 is declared in start.c,

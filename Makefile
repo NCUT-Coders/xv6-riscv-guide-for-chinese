@@ -173,3 +173,32 @@ qemu-gdb: $K/kernel .gdbinit fs.img
 	@echo "*** Now run 'gdb' in another window." 1>&2
 	$(QEMU) $(QEMUOPTS) -S $(QEMUGDB)
 
+# written by Gon_laze
+# try to run the img in k210
+# ref: rcore-tutorial-v3
+SDCARD		= /dev/sdb
+FS_IMG		= fs.img
+
+sdcard: fs.img
+	@echo "Are you sure write to $(SDCARD) ? [y/N] " && read ans && [ $${ans:-N} = y ]
+	@sudo dd if=/dev/zero of=$(SDCARD) bs=1048576 count=32
+	@sudo dd if=$(FS_IMG) of=$(SDCARD)
+
+KERNEL_ELF		=	$K/kernel
+KERNEL_BIN		= 	$(KERNEL_ELF).bin
+K210-SERIALPORT	= 	/dev/ttyUSB0
+K210-BURNER		= 	../kflash/kflash_py/kflash.py
+BOOTLOADER		= 	bootloader/rustsbi-k210.bin
+K210_BOOTLOADER_SIZE 	:= 	131072
+
+$(KERNEL_BIN): $K/kernel
+	$(OBJCOPY) $(KERNEL_ELF) --strip-all -O binary $@
+
+board-run: $(KERNEL_BIN)
+	(which $(K210-BURNER)) || (cd .. && git clone https://github.com/sipeed/kflash.py.git && mv kflash.py tools)
+	# cp $(BOOTLOADER) $(BOOTLOADER).copy
+	# dd if=$(KERNEL_BIN) of=$(BOOTLOADER).copy bs=$(K210_BOOTLOADER_SIZE) seek=1
+	# mv $(BOOTLOADER).copy $(KERNEL_BIN)
+	@sudo chmod 777 $(K210-SERIALPORT)
+	python3 $(K210-BURNER) -p $(K210-SERIALPORT) -b 1500000 $(KERNEL_BIN)
+	python3 -m serial.tools.miniterm --eol LF --dtr 0 --rts 0 --filter direct $(K210-SERIALPORT) 115200

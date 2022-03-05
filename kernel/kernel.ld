@@ -15,8 +15,11 @@ SECTIONS
   /*
    * ensure that entry.S / _entry is at 0x80000000,
    * where qemu's -kernel jumps.
+   * TODO: '.' has been changed
+   *
    */
-  . = 0x80000000;
+   
+  . = 0x80020000;
 
   .text : {
     *(.text .text.*)
