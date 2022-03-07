@@ -39,6 +39,7 @@ start()
   */
 
   // set M Previous Privilege mode to Supervisor, for mret.
+  printf("start test\n");
   unsigned long x = r_mstatus();
   x &= ~MSTATUS_MPP_MASK;
   x |= MSTATUS_MPP_S;

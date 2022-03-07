@@ -7,12 +7,13 @@
 volatile static int started = 0;
 
 // start() jumps here in supervisor mode on all CPUs.
-void
-main()
+void 
+__main__()
 {
   // 仅有主cpu(cpu0)加载boot部分代码并加载硬件线程(hart)
   // 余下只需加载hart
   // 加载完毕后，调用scheduler()调度线程，保持工作
+  printf("test: CPU\n");
   if(cpuid() == 0){
     consoleinit();
     printfinit();

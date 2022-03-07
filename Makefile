@@ -1,16 +1,45 @@
 K=kernel
 U=user
 
+
+# TODO: entry.o start.o
+#OBJS = \
+#  $K/entry.o \
+#  $K/start.o
+#  $K/main.o \
+#  $K/console.o \
+#  $K/printf.o \
+#  $K/uart.o \
+#  $K/kalloc.o \
+#  $K/spinlock.o \
+#  $K/string.o \
+#  $K/vm.o \
+#  $K/proc.o \
+#  $K/swtch.o \
+#  $K/trampoline.o \
+#  $K/trap.o \
+#  $K/syscall.o \
+#  $K/sysproc.o \
+#  $K/bio.o \
+#  $K/fs.o \
+#  $K/log.o \
+#  $K/sleeplock.o \
+#  $K/file.o \
+#  $K/pipe.o \
+#  $K/exec.o \
+#  $K/sysfile.o \
+#  $K/kernelvec.o \
+#  $K/plic.o \
+#  $K/virtio_disk.o
+  
 OBJS = \
-  $K/entry.o \
-  $K/start.o \
+  $K/main.o \
   $K/console.o \
   $K/printf.o \
   $K/uart.o \
   $K/kalloc.o \
   $K/spinlock.o \
   $K/string.o \
-  $K/main.o \
   $K/vm.o \
   $K/proc.o \
   $K/swtch.o \
@@ -28,7 +57,8 @@ OBJS = \
   $K/sysfile.o \
   $K/kernelvec.o \
   $K/plic.o \
-  $K/virtio_disk.o
+  $K/virtio_disk.o \
+  $K/hello_world.o
 
 # riscv64-unknown-elf- or riscv64-linux-gnu-
 # perhaps in /opt/riscv/bin
@@ -147,8 +177,9 @@ clean:
 	$U/initcode $U/initcode.out $K/kernel fs.img \
 	mkfs/mkfs .gdbinit \
         $U/usys.S \
-	$(UPROGS)
-
+	$(UPROGS) \
+	$(KERNEL_BIN)
+	
 # try to generate a unique GDB port
 GDBPORT = $(shell expr `id -u` % 5000 + 25000)
 # QEMU's gdb stub command line changed in 0.11
@@ -193,12 +224,16 @@ K210_BOOTLOADER_SIZE 	:= 	131072
 
 $(KERNEL_BIN): $K/kernel
 	$(OBJCOPY) $(KERNEL_ELF) --strip-all -O binary $@
+	
+bin-dump: $(KERNEL_BIN) $(BOOTLOADER)
+	$(OBJDUMP) -D -b binary -m riscv $(KERNEL_BIN) > $(KERNEL_BIN).asm
+	$(OBJDUMP) -D -b binary -m riscv $(BOOTLOADER) > $(BOOTLOADER).asm
 
 board-run: $(KERNEL_BIN)
 	(which $(K210-BURNER)) || (cd .. && git clone https://github.com/sipeed/kflash.py.git && mv kflash.py tools)
-	# cp $(BOOTLOADER) $(BOOTLOADER).copy
-	# dd if=$(KERNEL_BIN) of=$(BOOTLOADER).copy bs=$(K210_BOOTLOADER_SIZE) seek=1
-	# mv $(BOOTLOADER).copy $(KERNEL_BIN)
+	cp $(BOOTLOADER) $(BOOTLOADER).copy
+	dd if=$(KERNEL_BIN) of=$(BOOTLOADER).copy bs=$(K210_BOOTLOADER_SIZE) seek=1
+	mv $(BOOTLOADER).copy $(KERNEL_BIN)
 	@sudo chmod 777 $(K210-SERIALPORT)
 	python3 $(K210-BURNER) -p $(K210-SERIALPORT) -b 1500000 $(KERNEL_BIN)
 	python3 -m serial.tools.miniterm --eol LF --dtr 0 --rts 0 --filter direct $(K210-SERIALPORT) 115200
