@@ -65,8 +65,10 @@
 
 // 内核把这里当作用于内核与用户页的RAM
 // 从物理地址0x80000000延伸到PHYSTOP
-#define KERNBASE 0x80000000L
-#define PHYSTOP (KERNBASE + 128*1024*1024)
+// TODO: KERNEL更改（支持k210）
+#define KERNBASE 0x80020000L
+// TODO: PHYSTOP更改（128MB->6MB, 支持k210）
+#define PHYSTOP 0x80600000L
 
 // 在用户和内核空间上把trampoline页映射到最高地址
 #define TRAMPOLINE (MAXVA - PGSIZE)

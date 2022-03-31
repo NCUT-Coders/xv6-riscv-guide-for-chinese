@@ -1,0 +1,1 @@
+#define RUNNING_TEST

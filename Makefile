@@ -33,6 +33,7 @@ U=user
 #  $K/virtio_disk.o
   
 OBJS = \
+  $K/entry.o \
   $K/main.o \
   $K/console.o \
   $K/printf.o \
@@ -104,7 +105,7 @@ endif
 LDFLAGS = -z max-page-size=4096
 
 $K/kernel: $(OBJS) $K/kernel.ld $U/initcode
-	$(LD) $(LDFLAGS) -T $K/kernel.ld -o $K/kernel $(OBJS) 
+	$(LD) $(LDFLAGS) -T $K/k210.ld -o $K/kernel $(OBJS) 
 	$(OBJDUMP) -S $K/kernel > $K/kernel.asm
 	$(OBJDUMP) -t $K/kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $K/kernel.sym
 
@@ -187,7 +188,7 @@ QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
 	then echo "-gdb tcp::$(GDBPORT)"; \
 	else echo "-s -p $(GDBPORT)"; fi)
 ifndef CPUS
-CPUS := 3
+CPUS := 2
 endif
 
 QEMUOPTS = -machine virt -bios none -kernel $K/kernel -m 128M -smp $(CPUS) -nographic
@@ -219,7 +220,7 @@ KERNEL_ELF		=	$K/kernel
 KERNEL_BIN		= 	$(KERNEL_ELF).bin
 K210-SERIALPORT	= 	/dev/ttyUSB0
 K210-BURNER		= 	../kflash/kflash_py/kflash.py
-BOOTLOADER		= 	bootloader/rustsbi-k210.bin
+BOOTLOADER		= 	bootloader/sbi-k210.bin
 K210_BOOTLOADER_SIZE 	:= 	131072
 
 $(KERNEL_BIN): $K/kernel
@@ -229,7 +230,7 @@ bin-dump: $(KERNEL_BIN) $(BOOTLOADER)
 	$(OBJDUMP) -D -b binary -m riscv $(KERNEL_BIN) > $(KERNEL_BIN).asm
 	$(OBJDUMP) -D -b binary -m riscv $(BOOTLOADER) > $(BOOTLOADER).asm
 
-board-run: $(KERNEL_BIN)
+board-run: $(KERNEL_BIN) bin-dump
 	(which $(K210-BURNER)) || (cd .. && git clone https://github.com/sipeed/kflash.py.git && mv kflash.py tools)
 	cp $(BOOTLOADER) $(BOOTLOADER).copy
 	dd if=$(KERNEL_BIN) of=$(BOOTLOADER).copy bs=$(K210_BOOTLOADER_SIZE) seek=1

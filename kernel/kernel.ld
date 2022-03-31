@@ -3,7 +3,7 @@ OUTPUT_ARCH( "riscv" )
   这一句应该就是指定了entry.S为初始化的入口
   具体细节有兴趣再探讨
 */
-ENTRY(__main__)
+ENTRY(_start)
 
 /*
   实现整个内存布局的链接

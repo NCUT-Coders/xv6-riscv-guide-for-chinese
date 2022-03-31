@@ -5,24 +5,32 @@
         
         # 0x80000000：作为内核起始地址，此处的物理地址将会映射到虚拟地址的0x0处
         # 之所以将内核放在0x80000000而不是0x0，是因为地址范围0x0-0x80000000包含I/O设备。
-.section .text
-.globl _entry
-_entry:
-	# set up a stack for C.
-        # stack0 is declared in start.c,
-        # with a 4096-byte stack per CPU.
-        # sp = stack0 + (hartid * 4096)
+    .section .text.entry
+    .globl _start
+_start:
+    add t0, a0, 1
+    slli t0, t0, 14
+    // lui sp, %hi(boot_stack)
+	la sp, boot_stack
+    add sp, sp, t0
 
-        # 声明一个栈提供给C代码，大小为4MB（即限制内核指令及代码上限)
-        # 栈顶位置为 stack0 + 4MB （因为栈自上往下扩张）
-        la sp, stack0
-        li a0, 1024*4
-	csrr a1, mhartid
-        addi a1, a1, 1
-        mul a0, a0, a1
-        add sp, sp, a0
-	# jump to start() in start.c
-        # 唤起跳转至start.c中的start()处
-        call start
-spin:
-        j spin
+    // add by retrhelo, write tp reg 
+    // csrr t1, mhartid 
+    // mv tp, t1
+
+    // lui t0, %hi(main)
+    // addi t0, t0, %lo(main)
+    // jr t0
+    call main
+
+loop:
+    j loop
+
+    .section .bss.stack
+    .align 12
+    .globl boot_stack
+boot_stack:
+    .space 4096 * 4 * 2
+    .globl boot_stack_top
+boot_stack_top:
+

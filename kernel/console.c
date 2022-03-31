@@ -21,6 +21,7 @@
 #include "riscv.h"
 #include "defs.h"
 #include "proc.h"
+#include "sbi.h"
 
 #define BACKSPACE 0x100
 #define C(x)  ((x)-'@')  // Control-x
@@ -35,9 +36,9 @@ consputc(int c)
 {
   if(c == BACKSPACE){
     // if the user typed backspace, overwrite with a space.
-    uartputc_sync('\b'); uartputc_sync(' '); uartputc_sync('\b');
+    sbi_console_putchar('\b'); sbi_console_putchar(' '); sbi_console_putchar('\b');
   } else {
-    uartputc_sync(c);
+    sbi_console_putchar(c);
   }
 }
 
@@ -183,8 +184,8 @@ consoleinit(void)
 {
   initlock(&cons.lock, "cons");
 
-  uartinit();
-
+  // uartinit();
+  cons.e = cons.w = cons.r = 0;
   // connect read and write system calls
   // to consoleread and consolewrite.
   devsw[CONSOLE].read = consoleread;

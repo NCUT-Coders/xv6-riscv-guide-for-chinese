@@ -10,6 +10,7 @@
 #include "spinlock.h"
 #include "riscv.h"
 #include "defs.h"
+#include "config.h"
 
 void freerange(void *pa_start, void *pa_end);
 
@@ -45,7 +46,12 @@ freerange(void *pa_start, void *pa_end)
   char *p;
   p = (char*)PGROUNDUP((uint64)pa_start);
   for(; p + PGSIZE <= (char*)pa_end; p += PGSIZE)
+  {
+    #ifdef RUNNING_TEST
+    printf("init addr: %p\n", p);
+    #endif
     kfree(p);
+  }
 }
 
 // Free the page of physical memory pointed at by v,
