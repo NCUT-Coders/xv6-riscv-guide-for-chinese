@@ -48,7 +48,7 @@ freerange(void *pa_start, void *pa_end)
   for(; p + PGSIZE <= (char*)pa_end; p += PGSIZE)
   {
     #ifdef RUNNING_TEST
-    printf("init addr: %p\n", p);
+    // printf("init addr: %p\n", p);
     #endif
     kfree(p);
   }

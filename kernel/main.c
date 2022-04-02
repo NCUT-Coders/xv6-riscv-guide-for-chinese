@@ -36,32 +36,60 @@ main(unsigned long hartID, unsigned long dtb_pa)
     #ifdef RUNNING_TEST
     // TODO: 为何地址空间从小到大（是置入了栈内吗？）
     printf("space check: \n");
-    printf("kernel_start: %p\n", kernel_start);
-    printf("rodata_start: %p\n", rodata_start);
-    printf("data_start: %p\n", data_start);
-    printf("bss_start: %p\n", bss_start);
-    printf("end: %p\n", end);
-    printf("\n");
-    printf("base: %d\n", PHYSTOP);
-    printf("PHYSTOP: %d\n", PHYSTOP);
+    printf("kernel_start: \t\t%p\n", kernel_start);
+    printf("rodata_start: \t\t%p\n", rodata_start);
+    printf("data_start: \t\t%p\n", data_start);
+    printf("bss_start: \t\t%p\n", bss_start);
+    printf("end: \t\t\t%p\n", end);
+    consputc('\n');
+    printf("base: \t\t\t%p\n", KERNBASE);
+    printf("PHYSTOP: \t\t%p\n", PHYSTOP);
+    consputc('\n');
     #endif
     kinit();         // 内存全置1，清理空间
     #ifdef RUNNING_TEST
-    printf("kernel space clear.\n");
+    printf("kernel space clear\n");
     #endif
     kvminit();       // 构建并初始化内核页表
     #ifdef RUNNING_TEST
-    printf("kernel pages have been initialized.\n");
+    printf("kernel page table has been initialized\n");
     #endif
     kvminithart();   // 启动分页模式
+    #ifdef RUNNING_TEST
+    printf("Sv39: \t\t\ton\n");
+    #endif
     procinit();      // process table
+    #ifdef RUNNING_TEST
+    printf("process init: \t\tdone\n");
+    #endif
     trapinit();      // trap vectors
+    #ifdef RUNNING_TEST
+    printf("trap init: \t\tdone\n");
+    #endif
     trapinithart();  // install kernel trap vector
+    #ifdef RUNNING_TEST
+    printf("load kernel trap vector\n");
+    #endif
     plicinit();      // set up interrupt controller
+    #ifdef RUNNING_TEST
+    printf("PLIC init: \t\tdone\n");
+    #endif
     plicinithart();  // ask PLIC for device interrupts
+    #ifdef RUNNING_TEST
+    printf("PLIC interrupts: \ton\n");
+    #endif
     binit();         // buffer cache
+    #ifdef RUNNING_TEST
+    printf("bcache init: \t\tdone\n");
+    #endif
     iinit();         // inode cache
+    #ifdef RUNNING_TEST
+    printf("icache init: \t\tdone\n");
+    #endif
     fileinit();      // file table
+    #ifdef RUNNING_TEST
+    printf("file table init: \tdone\n");
+    #endif
     virtio_disk_init(); // emulated hard disk
     userinit();      // first user process（开始创建用户进程）
     __sync_synchronize();
