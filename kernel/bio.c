@@ -22,6 +22,7 @@
 #include "defs.h"
 #include "fs.h"
 #include "buf.h"
+#include "config.h"
 
 // 定义缓存区 bcache
 // 对于bcache：只需要找到头部的区块head，其他都可用双向链表找到
@@ -52,6 +53,10 @@ binit(void)
     bcache.head.next->prev = b;
     bcache.head.next = b;
   }
+
+  #ifdef RUNNING_TEST
+    printf("bcache init: \t\tdone\n");
+  #endif
 }
 
 // Look through buffer cache for block on device dev.

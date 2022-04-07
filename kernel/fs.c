@@ -35,6 +35,7 @@
 #include "fs.h"
 #include "buf.h"
 #include "file.h"
+#include "config.h"
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 // there should be one superblock per disk device, but we run with
@@ -201,6 +202,10 @@ iinit()
   for(i = 0; i < NINODE; i++) {
     initsleeplock(&itable.inode[i].lock, "inode");
   }
+
+  #ifdef RUNNING_TEST
+    printf("icache init: \t\tdone\n");
+  #endif
 }
 
 static struct inode* iget(uint dev, uint inum);

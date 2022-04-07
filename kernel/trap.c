@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "config.h"
 
 struct spinlock tickslock;
 uint ticks;
@@ -20,6 +21,10 @@ void
 trapinit(void)
 {
   initlock(&tickslock, "time");
+
+  #ifdef RUNNING_TEST
+    printf("trap init: \t\tdone\n");
+  #endif
 }
 
 // set up to take exceptions and traps while in the kernel.
@@ -27,6 +32,10 @@ void
 trapinithart(void)
 {
   w_stvec((uint64)kernelvec);
+
+  #ifdef RUNNING_TEST
+    printf("load kernel trap vector\n");
+  #endif
 }
 
 //

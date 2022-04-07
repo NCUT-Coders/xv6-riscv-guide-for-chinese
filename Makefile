@@ -1,6 +1,8 @@
 K=kernel
 U=user
 
+BOARD	:= qemu
+
 
 # TODO: entry.o start.o
 #OBJS = \
@@ -34,6 +36,7 @@ U=user
   
 OBJS = \
   $K/entry.o \
+  $K/start.o \
   $K/main.o \
   $K/console.o \
   $K/printf.o \
@@ -104,8 +107,16 @@ endif
 
 LDFLAGS = -z max-page-size=4096
 
+ifeq ($(BOARD),qemu)
+linker=$K/kernel.ld
+else
+linker=$K/k210.ld
+endif
+
 $K/kernel: $(OBJS) $K/kernel.ld $U/initcode
-	$(LD) $(LDFLAGS) -T $K/k210.ld -o $K/kernel $(OBJS) 
+	@echo "BOARD: $(BOARD)"
+	@echo "linker: $(linker)"
+	$(LD) $(LDFLAGS) -T $(linker) -o $K/kernel $(OBJS) 
 	$(OBJDUMP) -S $K/kernel > $K/kernel.asm
 	$(OBJDUMP) -t $K/kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $K/kernel.sym
 

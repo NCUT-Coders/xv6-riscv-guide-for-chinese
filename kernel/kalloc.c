@@ -36,6 +36,10 @@ kinit()
 {
   initlock(&kmem.lock, "kmem");
   freerange(end, (void*)PHYSTOP);
+
+  #ifdef RUNNING_TEST
+    printf("kernel space clear\n");
+  #endif
 }
 
 // 清空pa_start至pa_end中的连续页部分

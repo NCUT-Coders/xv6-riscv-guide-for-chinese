@@ -3,6 +3,7 @@
 #include "memlayout.h"
 #include "riscv.h"
 #include "defs.h"
+#include "config.h"
 
 //
 // the riscv Platform Level Interrupt Controller (PLIC).
@@ -14,6 +15,10 @@ plicinit(void)
   // set desired IRQ priorities non-zero (otherwise disabled).
   *(uint32*)(PLIC + UART0_IRQ*4) = 1;
   *(uint32*)(PLIC + VIRTIO0_IRQ*4) = 1;
+
+  #ifdef RUNNING_TEST
+    printf("PLIC init: \t\tdone\n");
+  #endif
 }
 
 void
@@ -26,6 +31,10 @@ plicinithart(void)
 
   // set this hart's S-mode priority threshold to 0.
   *(uint32*)PLIC_SPRIORITY(hart) = 0;
+
+  #ifdef RUNNING_TEST
+    printf("PLIC interrupts: \ton\n");
+  #endif
 }
 
 // ask the PLIC what interrupt we should serve.

@@ -22,6 +22,7 @@
 #include "defs.h"
 #include "proc.h"
 #include "sbi.h"
+#include "config.h"
 
 #define BACKSPACE 0x100
 #define C(x)  ((x)-'@')  // Control-x
@@ -34,12 +35,23 @@
 void
 consputc(int c)
 {
-  if(c == BACKSPACE){
-    // if the user typed backspace, overwrite with a space.
-    sbi_console_putchar('\b'); sbi_console_putchar(' '); sbi_console_putchar('\b');
-  } else {
-    sbi_console_putchar(c);
-  }
+  
+  #ifdef K210
+    // 利用rustSBI中断来实现字符输出
+    if(c == BACKSPACE){
+      // if the user typed backspace, overwrite with a space.
+      sbi_console_putchar('\b'); sbi_console_putchar(' '); sbi_console_putchar('\b');
+    } else {
+      sbi_console_putchar(c);
+    }
+  #else
+    if(c == BACKSPACE){
+      // if the user typed backspace, overwrite with a space.
+      uartputc_sync('\b'); uartputc_sync(' '); uartputc_sync('\b');
+    } else {
+      uartputc_sync(c);
+    }
+  #endif
 }
 
 struct {
@@ -183,8 +195,10 @@ void
 consoleinit(void)
 {
   initlock(&cons.lock, "cons");
-
-  // uartinit();
+  #ifdef K210
+  #else
+    uartinit();
+  #endif
   cons.e = cons.w = cons.r = 0;
   // connect read and write system calls
   // to consoleread and consolewrite.

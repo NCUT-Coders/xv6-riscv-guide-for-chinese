@@ -9,6 +9,7 @@
 #include "riscv.h"
 #include "defs.h"
 #include "fs.h"
+#include "config.h"
 
 
 /*
@@ -74,6 +75,10 @@ void
 kvminit(void)
 {
   kernel_pagetable = kvmmake();
+
+  #ifdef RUNNING_TEST
+    printf("kernel page table has been initialized\n");
+  #endif
 }
 
 // Switch h/w page table register to the kernel's page table,
@@ -83,6 +88,10 @@ kvminithart()
 {
   w_satp(MAKE_SATP(kernel_pagetable));
   sfence_vma();
+
+  #ifdef RUNNING_TEST
+    printf("Sv39: \t\t\ton\n");
+  #endif
 }
 
 // risc-v Sv39方案采用三级分页。

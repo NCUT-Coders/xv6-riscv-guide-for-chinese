@@ -3,6 +3,7 @@
 #include "memlayout.h"
 #include "riscv.h"
 #include "defs.h"
+#include "config.h"
 
 void main();
 void timerinit();
@@ -22,51 +23,59 @@ extern void timervec();
 void
 start()
 {
-  /*
-    通过mret(Machine-mode Exception Return)跳出机器模式以进入监管者模式
-    需要以下准备工作：
-    
-      step_1：首先改变异常寄存器mstatus的状态(通过定义的宏的掩码操作实现)
-      step_2：将main的地址写入寄存器mepc(Machine Exception PC)
-              这将使异常发生时跳转至main()
-      step_3：取消分页, 通过寄存器satp(Supervisor Address Translation and Protection)控制
-      step_4：mideleg（Machine Interrupt Delegation)全置1将所有中断给予S模式；
-              medeleg则是给予异常；
-              更改sie(Supervisor Interrupt Enable)使得mideleg所有位都可以被读写
-      step_5：初始化时钟以进行定时器中断
-    
-    M=Machine S=Supervisor
-  */
+  #ifdef K210
+    int id = r_mhartid();
+    w_tp(id);
+    // TODO: timer需要启动吗？
+    // timerinit();
+    // 由于rustSBI已经处理好M态工作，因此仅通过最平常方式调用
+    main();
+  #else
+    /*
+      通过mret(Machine-mode Exception Return)跳出机器模式以进入监管者模式
+      需要以下准备工作：
+      
+        step_1：首先改变异常寄存器mstatus的状态(通过定义的宏的掩码操作实现)
+        step_2：将main的地址写入寄存器mepc(Machine Exception PC)
+                这将使异常发生时跳转至main()
+        step_3：取消分页, 通过寄存器satp(Supervisor Address Translation and Protection)控制
+        step_4：mideleg（Machine Interrupt Delegation)全置1将所有中断给予S模式；
+                medeleg则是给予异常；
+                更改sie(Supervisor Interrupt Enable)使得mideleg所有位都可以被读写
+        step_5：初始化时钟以进行定时器中断
+      
+      M=Machine S=Supervisor
+    */
 
-  // set M Previous Privilege mode to Supervisor, for mret.
-  printf("start test\n");
-  unsigned long x = r_mstatus();
-  x &= ~MSTATUS_MPP_MASK;
-  x |= MSTATUS_MPP_S;
-  w_mstatus(x);
+    // set M Previous Privilege mode to Supervisor, for mret.
+    unsigned long x = r_mstatus();
+    x &= ~MSTATUS_MPP_MASK;
+    x |= MSTATUS_MPP_S;
+    w_mstatus(x);
 
-  // set M Exception Program Counter to main, for mret.
-  // requires gcc -mcmodel=medany
-  w_mepc((uint64)main);
+    // set M Exception Program Counter to main, for mret.
+    // requires gcc -mcmodel=medany
+    w_mepc((uint64)main);
 
-  // disable paging for now.
-  w_satp(0);
+    // disable paging for now.
+    w_satp(0);
 
-  // delegate all interrupts and exceptions to supervisor mode.
-  w_medeleg(0xffff);
-  w_mideleg(0xffff);
-  w_sie(r_sie() | SIE_SEIE | SIE_STIE | SIE_SSIE);
+    // delegate all interrupts and exceptions to supervisor mode.
+    w_medeleg(0xffff);
+    w_mideleg(0xffff);
+    w_sie(r_sie() | SIE_SEIE | SIE_STIE | SIE_SSIE);
 
-  // ask for clock interrupts.
-  timerinit();
+    // ask for clock interrupts.
+    timerinit();
 
-  // keep each CPU's hartid in its tp register, for cpuid().
-  int id = r_mhartid();
-  w_tp(id);
+    // keep each CPU's hartid in its tp register, for cpuid().
+    int id = r_mhartid();
+    w_tp(id);
 
-  // switch to supervisor mode and jump to main().
-  // 至此，mret正式启动，进入S模式并开始运行main()
-  asm volatile("mret");
+    // switch to supervisor mode and jump to main().
+    // 至此，mret正式启动，进入S模式并开始运行main()
+    asm volatile("mret");
+  #endif
 }
 
 // set up to receive timer interrupts in machine mode,

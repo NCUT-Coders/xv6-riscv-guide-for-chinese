@@ -5,6 +5,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "defs.h"
+#include "config.h"
 /*
   一个大胆且重要的猜想：
   一旦机器运行，每个CPU都将加载内核代码，完整的进行运行
@@ -59,6 +60,10 @@ procinit(void)
       initlock(&p->lock, "proc");
       p->kstack = KSTACK((int) (p - proc));
   }
+
+  #ifdef RUNNING_TEST
+    printf("process init: \t\tdone\n");
+  #endif
 }
 
 // 返回当前cpu的编号
@@ -256,6 +261,10 @@ userinit(void)
   p->state = RUNNABLE;
 
   release(&p->lock);
+
+  #ifdef RUNNING_TEST
+    printf("user proc start\n");
+  #endif
 }
 
 // Grow or shrink user memory by n bytes.

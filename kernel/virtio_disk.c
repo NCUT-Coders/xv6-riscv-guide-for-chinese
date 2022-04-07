@@ -16,6 +16,7 @@
 #include "fs.h"
 #include "buf.h"
 #include "virtio.h"
+#include "config.h"
 
 // the address of virtio mmio register r.
 #define R(r) ((volatile uint32 *)(VIRTIO0 + (r)))
@@ -138,6 +139,10 @@ virtio_disk_init(void)
     disk.free[i] = 1;
 
   // plic.c and trap.c arrange for interrupts from VIRTIO0_IRQ.
+
+  #ifdef RUNNING_TEST
+    printf("virtual IO disk set\n");
+  #endif
 }
 
 // find a free descriptor, mark it non-free, return its index.

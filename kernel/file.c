@@ -12,6 +12,7 @@
 #include "file.h"
 #include "stat.h"
 #include "proc.h"
+#include "config.h"
 
 struct devsw devsw[NDEV];
 struct {
@@ -23,6 +24,10 @@ void
 fileinit(void)
 {
   initlock(&ftable.lock, "ftable");
+
+  #ifdef RUNNING_TEST
+    printf("file table init: \tdone\n");
+  #endif
 }
 
 // Allocate a file structure.
@@ -40,6 +45,7 @@ filealloc(void)
     }
   }
   release(&ftable.lock);
+
   return 0;
 }
 
