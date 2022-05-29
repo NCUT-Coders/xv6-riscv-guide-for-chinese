@@ -27,6 +27,11 @@ static inline void inithartid(unsigned long hartid) {
 }
 
 volatile static int started = 0;
+extern char *kernel_start;
+extern char *rodata_start;
+extern char *data_start;
+extern char *bss_start;
+extern char *kernel_end;
 
 void
 main(unsigned long hartid, unsigned long dtb_pa)
@@ -37,6 +42,14 @@ main(unsigned long hartid, unsigned long dtb_pa)
     consoleinit();
     printfinit();   // init a lock for printf 
     print_logo();
+    #ifndef QEMU
+    printf("space check: \n");
+    printf("kernel_start: 0x%x\n", kernel_start);
+    printf("rodata_start: 0x%x\n", rodata_start);
+    printf("data_start: 0x%x\n", data_start);
+    printf("bss_start: 0x%x\n", bss_start);
+    printf("end: 0x%x\n", kernel_end);
+    #endif 
     #ifdef DEBUG
     printf("hart %d enter main()...\n", hartid);
     #endif

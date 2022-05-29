@@ -6,10 +6,12 @@
 #include "include/spinlock.h"
 #include "include/proc.h"
 #include "include/syscall.h"
+#include "include/proc.h"
 #include "include/timer.h"
 #include "include/kalloc.h"
 #include "include/string.h"
 #include "include/printf.h"
+#include "include/sys_struct.h"
 
 extern int exec(char *path, char **argv);
 
@@ -154,3 +156,33 @@ sys_trace(void)
   myproc()->tmask = mask;
   return 0;
 }
+
+uint64
+sys_nanosleep(void)
+{
+  uint64 sec, nsec;
+  if (argint(0, &sec)<0 || argint(1, &nsec)<0)
+    return -1;
+
+  uint64 MS_num = 1000*sec + nsec/1000000; // ms
+  uint64 self_lock = &myproc()->lock;
+
+  acquire(self_lock);
+  
+  uint64 cur_time = r_time();
+  uint64 cur_time = ticks;
+  while (r_time()-cur_time < MS_num)
+    sleep(&nanosleep_lock, self_lock);
+  
+  release(self_lock);
+
+  return 0;
+    
+}
+
+uint64
+sys_exit_noret(void)
+{
+  return sys_exit();
+}
+ 

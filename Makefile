@@ -1,4 +1,4 @@
-platform	:= k210
+platform	?= k210
 #platform	:= qemu
 # mode := debug
 mode := release
@@ -65,8 +65,8 @@ else
 RUSTSBI = ./bootloader/SBI/sbi-qemu
 endif
 
-# TOOLPREFIX	:= riscv64-unknown-elf-
-TOOLPREFIX	:= riscv64-linux-gnu-
+TOOLPREFIX	:= riscv64-unknown-elf-
+# TOOLPREFIX	:= riscv64-linux-gnu-
 CC = $(TOOLPREFIX)gcc
 AS = $(TOOLPREFIX)gas
 LD = $(TOOLPREFIX)ld
@@ -204,6 +204,7 @@ UPROGS=\
 	$U/_usertests\
 	$U/_strace\
 	$U/_mv\
+#	$U/riscv64
 
 	# $U/_forktest\
 	# $U/_ln\
@@ -213,7 +214,7 @@ UPROGS=\
 
 userprogs: $(UPROGS)
 
-dst=/mnt
+dst=/media/gon/063B-4244
 
 # @sudo cp $U/_init $(dst)/init
 # @sudo cp $U/_sh $(dst)/sh
@@ -227,6 +228,7 @@ fs: $(UPROGS)
 	@if [ ! -d "$(dst)/bin" ]; then sudo mkdir $(dst)/bin; fi
 	@sudo cp README $(dst)/README
 	@for file in $$( ls $U/_* ); do \
+#	@for file in $(UPROGS) do \
 		sudo cp $$file $(dst)/$${file#$U/_};\
 		sudo cp $$file $(dst)/bin/$${file#$U/_}; done
 	@sudo umount $(dst)
@@ -234,8 +236,10 @@ fs: $(UPROGS)
 # Write mounted sdcard
 sdcard: userprogs
 	@if [ ! -d "$(dst)/bin" ]; then sudo mkdir $(dst)/bin; fi
+	@if [ ! -d "$(dst)/bin/riscv64" ]; then sudo mkdir $(dst)/bin/riscv64; fi
 	@for file in $$( ls $U/_* ); do \
 		sudo cp $$file $(dst)/bin/$${file#$U/_}; done
+	@sudo cp -r $U/riscv64 $(dst)/bin/
 	@sudo cp $U/_init $(dst)/init
 	@sudo cp $U/_sh $(dst)/sh
 	@sudo cp README $(dst)/README

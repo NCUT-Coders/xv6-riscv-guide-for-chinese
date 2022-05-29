@@ -21,6 +21,8 @@
 #include "include/printf.h"
 #include "include/vm.h"
 
+#include "include/sys_struct.h"
+
 
 // Fetch the nth word-sized system call argument as a file descriptor
 // and return both the descriptor and the corresponding struct file.
@@ -58,6 +60,25 @@ fdalloc(struct file *f)
   return -1;
 }
 
+// fdalloc with specific index
+static int
+fdalloc_WithNum(struct file *f, int i)
+{
+  int fd;
+  struct proc *p = myproc();
+
+  if (i>0 && i<NOFILE)
+  {
+    if (p->ofile[i] == 0)
+      p->ofile[i] = f;
+    else if (p->ofile[i] == f)
+      ;
+      
+      return i;
+  }
+  return -1;
+}
+
 uint64
 sys_dup(void)
 {
@@ -67,6 +88,24 @@ sys_dup(void)
   if(argfd(0, 0, &f) < 0)
     return -1;
   if((fd=fdalloc(f)) < 0)
+    return -1;
+  filedup(f);
+  return fd;
+}
+
+uint64
+sys_dup3(void)
+{
+  struct file *f;
+  int fd;
+  int idx;
+
+  if(argfd(0, 0, &f) < 0)
+    return -1;
+  if (argint(1, &idx) < 0)
+    return -1;
+  // TODO
+  if((fd=fdalloc_WithNum(f, idx)) < 0)
     return -1;
   filedup(f);
   return fd;
@@ -212,6 +251,92 @@ sys_open(void)
   return fd;
 }
 
+// TODO: 相当于先切换至fd所在目录，再换回来ep
+// 
+uint64
+sys_openat(void)
+{
+  char path[FAT32_MAX_PATH];
+  int targetfd, fd, omode;
+  struct file *f;
+  struct dirent *ep, *oldcwd, *newcwd, *targetep;
+
+  struct proc *p = myproc();
+
+  if (argint(0, &targetfd) < 0 || targetfd<0 || targetfd>NOFILE || \
+      myproc()->ofile[targetfd]==NULL)
+    return -1;
+  if(argstr(1, path, FAT32_MAX_PATH) < 0 || argint(2, &omode) < 0)
+    return -1;
+
+  oldcwd = myproc()->cwd;
+  newcwd = myproc()->ofile[targetfd]->ep;
+
+  // try to jump to new cwd
+  targetep = newcwd;
+  elock(targetep);
+  if(!(targetep->attribute & ATTR_DIRECTORY)){
+    eunlock(targetep);
+    eput(targetep);     // TOOD: this eput may cause error!
+    return -1;
+  }
+  eunlock(targetep);
+  eput(p->cwd);   // TOOD: this eput may cause error!
+  p->cwd = targetep;
+
+  if(omode & O_CREATE){
+    ep = create(path, T_FILE, omode);
+    if(ep == NULL){
+      return -1;
+    }
+  } else {
+    if((ep = ename(path)) == NULL){
+      return -1;
+    }
+    elock(ep);
+    if((ep->attribute & ATTR_DIRECTORY) && omode != O_RDONLY){
+      eunlock(ep);
+      eput(ep);
+      return -1;
+    }
+  }
+
+  if((f = filealloc()) == NULL || (fd = fdalloc(f)) < 0){
+    if (f) {
+      fileclose(f);
+    }
+    eunlock(ep);
+    eput(ep);
+    return -1;
+  }
+
+  if(!(ep->attribute & ATTR_DIRECTORY) && (omode & O_TRUNC)){
+    etrunc(ep);
+  }
+
+  f->type = FD_ENTRY;
+  f->off = (omode & O_APPEND) ? ep->file_size : 0;
+  f->ep = ep;
+  f->readable = !(omode & O_WRONLY);
+  f->writable = (omode & O_WRONLY) || (omode & O_RDWR);
+
+  eunlock(ep);
+
+  // try to jump back
+  targetep = oldcwd;
+  elock(targetep);
+  if(!(targetep->attribute & ATTR_DIRECTORY)){
+    eunlock(targetep);
+    eput(targetep);     // TOOD: this eput may cause error!
+    return -1;
+  }
+  eunlock(targetep);
+  eput(p->cwd);   // TOOD: this eput may cause error!
+  p->cwd = targetep;
+
+  return fd;
+}
+
 uint64
 sys_mkdir(void)
 {
@@ -246,6 +371,45 @@ sys_chdir(void)
   eput(p->cwd);
   p->cwd = ep;
   return 0;
+}
+
+uint64
+sys_getcwd_new(void)
+{
+  char tmpbuf[FAT32_MAX_PATH];
+  printf("test start. gon.\n");
+  uint64 addr;
+  if (argaddr(0, &addr) < 0)
+    return -1;
+  else if (addr == NULL)  addr=(uint64)tmpbuf;
+
+  struct dirent *de = myproc()->cwd;
+  char path[FAT32_MAX_PATH];
+  char *s;
+  int len;
+
+  if (de->parent == NULL) {
+    s = "/";
+  } else {
+    s = path + FAT32_MAX_PATH - 1;
+    *s = '\0';
+    while (de->parent) {
+      len = strlen(de->filename);
+      s -= len;
+      if (s <= path)          // can't reach root "/"
+        return -1;
+      strncpy(s, de->filename, len);
+      *--s = '/';
+      de = de->parent;
+    }
+  }
+
+  // if (copyout(myproc()->pagetable, addr, s, strlen(s) + 1) < 0)
+  if (copyout2(addr, s, strlen(s) + 1) < 0)
+    return -1;
+  
+  return 0;
+
 }
 
 uint64
@@ -493,4 +657,38 @@ fail:
   if (src)
     eput(src);
   return -1;
+}
+
+
+uint64
+sys_uname(void)
+{
+  struct utsname un = {
+    "xv6-k210",
+    "",
+    "",
+    "NCUT",
+    "kendryte_k210",
+    ""
+  };
+
+  return &un;
+}
+
+uint64
+sys_brk(void)
+{
+  return sys_sbrk();
+}
+
+uint64
+sys_getppid(void)
+{
+  return myproc()->parent->pid;
+}
+
+uint64
+sys_clone(void)
+{
+  return fork();
 }

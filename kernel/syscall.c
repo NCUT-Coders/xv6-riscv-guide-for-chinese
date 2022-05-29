@@ -116,6 +116,9 @@ extern uint64 sys_remove(void);
 extern uint64 sys_trace(void);
 extern uint64 sys_sysinfo(void);
 extern uint64 sys_rename(void);
+// written by Gon laze
+// some syscall for oscomp
+//extern uint64 sys_getcwd_new(void);
 
 static uint64 (*syscalls[])(void) = {
   [SYS_fork]        sys_fork,
@@ -144,6 +147,9 @@ static uint64 (*syscalls[])(void) = {
   [SYS_trace]       sys_trace,
   [SYS_sysinfo]     sys_sysinfo,
   [SYS_rename]      sys_rename,
+  // written by Gon laze
+  // some syscall for oscomp
+  //[SYS_getcwd_NEW]   sys_getcwd_new
 };
 
 static char *sysnames[] = {
@@ -173,6 +179,9 @@ static char *sysnames[] = {
   [SYS_trace]       "trace",
   [SYS_sysinfo]     "sysinfo",
   [SYS_rename]      "rename",
+  // written by Gon laze
+  // some syscall for oscomp
+  //[SYS_getcwd_NEW]   "getcwd",
 };
 
 void
@@ -185,9 +194,11 @@ syscall(void)
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
     p->trapframe->a0 = syscalls[num]();
         // trace
-    if ((p->tmask & (1 << num)) != 0) {
-      printf("pid %d: %s -> %d\n", p->pid, sysnames[num], p->trapframe->a0);
-    }
+      // TODO: DEBUG
+      //printf("pid %d(%s) has called: %d\n", p->pid, p->name, num);
+      // if ((p->tmask & (1 << num)) != 0) {
+      //   printf("pid %d: %s -> %d\n", p->pid, sysnames[num], p->trapframe->a0);
+    // }
   } else {
     printf("pid %d %s: unknown sys call %d\n",
             p->pid, p->name, num);

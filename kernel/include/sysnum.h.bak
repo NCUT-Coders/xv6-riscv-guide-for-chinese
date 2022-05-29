@@ -24,31 +24,31 @@
 #define SYS_mkdir           20
 #define SYS_close           57
 #define SYS_test_proc       22
-#define SYS_dev             81      // 太草了..差点冲突
+#define SYS_dev             23
 #define SYS_readdir         24
 #define SYS_getcwd          17
 #define SYS_rename          26
 
 // written by Gon laze
 // some syscall for oscomp 
-#define SYS_dup3            24      // WT
+#define SYS_dup3            24
 #define SYS_mkdirat         34
 #define SYS_unlinkat        35
 #define SYS_linkat          37
 #define SYS_umount2         39
 #define SYS_mount           40
-#define SYS_openat          56      // WT
+#define SYS_openat          56
 #define SYS_getdents64      61
-#define SYS_exit_noret      93      // WT
-#define SYS_nanosleep       101     // WT
+#define SYS_exit_noret      93
+#define SYS_nanosleep       101
 #define SYS_sched_yield     124
-#define SYS_times           153     // WT
-#define SYS_uname           160     // WT
+#define SYS_times           153
+#define SYS_uname           160
 #define SYS_gettimeofday    169
-#define SYS_getppid         173     // WT
-#define SYS_brk             214     // WT
+#define SYS_getppid         173
+#define SYS_brk             214
 #define SYS_munmap          215
-#define SYS_clone           220     // WT    // 可以试试fork？
+#define SYS_clone           220         // 可以试试fork？
 #define SYS_execve          221         // 可以试试exec？
 #define SYS_mmap            222
 #define SYS_wait4           260
