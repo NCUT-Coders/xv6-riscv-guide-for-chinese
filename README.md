@@ -1,4 +1,4 @@
-# xv6-riscv-guild-for-chinese
+# xv6-riscv-guide-for-chinese
 
 本项目由NCUT组建，旨在xv6-riscv翻译及推广
 
